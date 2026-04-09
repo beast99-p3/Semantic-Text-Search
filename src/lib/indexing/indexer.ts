@@ -13,6 +13,7 @@ import { sha256 } from "@/lib/utils/hash";
 let indexingPromise: Promise<EmbeddingCache> | null = null;
 let lastError: string | null = null;
 let inMemoryCache: EmbeddingCache | null = null;
+const EMBEDDING_CONCURRENCY = 4;
 
 function computeDatasetHash(): string {
   // The hash only tracks document content and metadata, not embeddings.
@@ -30,32 +31,49 @@ function computeDatasetHash(): string {
 async function buildFreshCache(datasetHash: string): Promise<EmbeddingCache> {
   const env = getServerEnv();
   const chunks = DATASET_DOCUMENTS.flatMap((doc) => chunkDocument(doc));
-  const records: CachedEmbeddingRecord[] = [];
+  const recordsByIndex = new Array<CachedEmbeddingRecord>(chunks.length);
+
+  let nextChunkIndex = 0;
+
+  const worker = async () => {
+    while (true) {
+      const index = nextChunkIndex;
+      nextChunkIndex += 1;
+
+      if (index >= chunks.length) {
+        return;
+      }
+
+      const chunk = chunks[index];
+      const embedding = await embedText(chunk.chunkText, {
+        purpose: "document",
+        title: chunk.title,
+      });
+
+      recordsByIndex[index] = {
+        chunkId: chunk.chunkId,
+        docId: chunk.docId,
+        title: chunk.title,
+        documentText: chunk.documentText,
+        chunkText: chunk.chunkText,
+        category: chunk.category,
+        tags: chunk.tags,
+        embedding,
+      };
+
+      if ((index + 1) % 10 === 0) {
+        console.info(`[indexer] embedded ${index + 1}/${chunks.length} chunks`);
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(EMBEDDING_CONCURRENCY, chunks.length) }, () => worker())
+  );
+
+  const records = recordsByIndex.filter((record): record is CachedEmbeddingRecord => Boolean(record));
 
   // Each chunk is embedded once and then persisted locally for reuse.
-  for (let index = 0; index < chunks.length; index += 1) {
-    const chunk = chunks[index];
-    const embedding = await embedText(chunk.chunkText, {
-      purpose: "document",
-      title: chunk.title,
-    });
-
-    records.push({
-      chunkId: chunk.chunkId,
-      docId: chunk.docId,
-      title: chunk.title,
-      documentText: chunk.documentText,
-      chunkText: chunk.chunkText,
-      category: chunk.category,
-      tags: chunk.tags,
-      embedding,
-    });
-
-    if ((index + 1) % 10 === 0) {
-      console.info(`[indexer] embedded ${index + 1}/${chunks.length} chunks`);
-    }
-  }
-
   const cache: EmbeddingCache = {
     version: 1,
     datasetVersion: DATASET_VERSION,

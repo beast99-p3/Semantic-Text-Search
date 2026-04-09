@@ -8,6 +8,15 @@ export interface SearchResponseModel {
   results: Awaited<ReturnType<typeof rankSemanticMatches>>;
 }
 
+interface SearchCacheEntry {
+  expiresAt: number;
+  results: SearchResponseModel["results"];
+}
+
+const SEARCH_CACHE_TTL_MS = 30_000;
+const SEARCH_CACHE_MAX_ENTRIES = 120;
+const searchResponseCache = new Map<string, SearchCacheEntry>();
+
 function filterByCategory<T extends { category: DocumentCategory }>(
   items: T[],
   category?: DocumentCategory
@@ -19,9 +28,54 @@ function filterByCategory<T extends { category: DocumentCategory }>(
   return items.filter((item) => item.category === category);
 }
 
+function buildSearchCacheKey(indexHash: string, input: SearchInput, trimmedQuery: string): string {
+  return [
+    indexHash,
+    trimmedQuery.toLowerCase(),
+    input.category ?? "all",
+    String(input.k),
+    String(input.threshold),
+  ].join("::");
+}
+
+function pruneExpiredSearchEntries(now: number): void {
+  for (const [key, entry] of searchResponseCache.entries()) {
+    if (entry.expiresAt <= now) {
+      searchResponseCache.delete(key);
+    }
+  }
+}
+
+function cacheSearchResults(key: string, results: SearchResponseModel["results"], now: number): void {
+  searchResponseCache.set(key, {
+    expiresAt: now + SEARCH_CACHE_TTL_MS,
+    results,
+  });
+
+  while (searchResponseCache.size > SEARCH_CACHE_MAX_ENTRIES) {
+    const firstKey = searchResponseCache.keys().next().value;
+    if (!firstKey) {
+      break;
+    }
+
+    searchResponseCache.delete(firstKey);
+  }
+}
+
 export async function semanticSearch(input: SearchInput): Promise<SearchResponseModel> {
   const trimmedQuery = input.query.trim();
   const index = await ensureIndexReady();
+  const now = Date.now();
+
+  pruneExpiredSearchEntries(now);
+
+  const cacheKey = buildSearchCacheKey(index.datasetHash, input, trimmedQuery);
+  const cached = searchResponseCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > now) {
+    return { results: cached.results };
+  }
+
   const queryEmbedding = await embedText(trimmedQuery, { purpose: "query" });
   const candidateRecords = filterByCategory(index.records, input.category);
 
@@ -31,6 +85,8 @@ export async function semanticSearch(input: SearchInput): Promise<SearchResponse
     input.k,
     input.threshold
   );
+
+  cacheSearchResults(cacheKey, results, now);
 
   return {
     results,
