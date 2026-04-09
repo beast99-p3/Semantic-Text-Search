@@ -1,16 +1,18 @@
 # Semantic Text Search
 
-This is a compact semantic search app 
+Semantic search app built with Next.js and Gemini embeddings.
 
-The important boundary is kept clean on purpose: Gemini only creates embeddings. The app itself does the indexing, similarity math, ranking, and thresholding.
+The app embeds documents and queries, then ranks results in application code using cosine similarity and a relevance threshold.
 
 ## What’s In Here
 
-- A curated dataset of 80 short documents across animals, programming, sports, food, travel, history, technology, and health.
+- A curated dataset of 100 short documents across animals, programming, sports, food, travel, history, technology, and health.
 - Cached indexing so embeddings are not recomputed every time the app starts.
-- Manual cosine similarity and a simple relevance threshold.
+- Cosine similarity scoring and relevance threshold filtering.
 - A lightweight UI with debounced search, search history, category filtering, and an index status panel.
-- Basic tests and a Dockerfile for one-command startup.
+- API routes for search and indexing status.
+- Unit and integration tests.
+- Dockerfile for containerized runs.
 
 ## Good Demo Queries
 
@@ -23,7 +25,7 @@ Try these in the search box:
 - `roman water transport engineering`
 - `late caffeine and sleep`
 
-These are useful because they show semantic matching, not just keyword overlap.
+These queries are useful for checking semantic matches and ambiguity handling.
 
 ## How It Works
 
@@ -84,19 +86,7 @@ docker run --rm -p 3000:3000 --env-file .env.local semantic-text-search
 - `POST /api/index` rebuilds the cache if needed.
 - `GET /api/index/status` reports whether the index is ready.
 
-## Why This Project Is Small On Purpose
-
-I kept the app focused so it is easy to explain in an interview. The core story is strong without extra moving parts:
-
-- embeddings for meaning
-- local cache for speed
-- cosine similarity for ranking
-- a threshold so junk queries can fail gracefully
-- a clean UI that shows the result clearly
-
 ## Notes
 
 - The app does not ask Gemini to rank or choose documents directly.
 - The cache is local and human-readable.
-- The UI is intentionally practical rather than flashy.
-- See [docs/PROJECT_DEEP_DIVE.md](docs/PROJECT_DEEP_DIVE.md) for the full walkthrough and interview prep notes.

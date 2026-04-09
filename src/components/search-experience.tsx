@@ -237,7 +237,7 @@ export function SearchExperience() {
           </div>
 
           <div className="mt-6 rounded-xl border border-zinc-300 bg-white/70 p-4">
-            {/* A compact status card is easier to explain than a heavier debug dashboard. */}
+            {/* Index health snapshot from the backend status endpoint. */}
             <h3 className="text-sm font-semibold">Index Status</h3>
             <p className="ink-muted mt-1 text-xs">
               {indexStatus?.ready ? "Ready for semantic search" : "Not indexed yet"}
@@ -397,7 +397,7 @@ export function SearchExperience() {
           )}
 
           {searchData && (
-            // This lightweight summary keeps the result view readable while still showing useful context.
+            // Show result count, latency, and active index model for quick feedback.
             <section className="mt-7 rounded-xl border border-zinc-300 bg-white/70 p-4 text-xs ink-muted">
               <p>
                 Found {searchData.results.length} semantic result

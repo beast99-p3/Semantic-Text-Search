@@ -1,6 +1,6 @@
 import type { DatasetDocument } from "@/lib/dataset/types";
 
-export const DATASET_VERSION = "2026-04-09-v1";
+export const DATASET_VERSION = "2026-04-09-v2";
 
 export const DATASET_DOCUMENTS: DatasetDocument[] = [
 	{
@@ -562,5 +562,145 @@ export const DATASET_DOCUMENTS: DatasetDocument[] = [
 		text: "Long layovers are easier with lounge access, hydration, and timed naps.",
 		category: "travel",
 		tags: ["airport", "layover", "planning"],
+	},
+	{
+		id: "d081",
+		title: "Kubernetes rolling updates",
+		text: "Rolling deployments replace old pods gradually to reduce release risk.",
+		category: "technology",
+		tags: ["kubernetes", "deployment", "reliability"],
+	},
+	{
+		id: "d082",
+		title: "Giraffe blood pressure",
+		text: "Giraffes maintain high blood pressure to move blood up their long necks.",
+		category: "animals",
+		tags: ["giraffe", "circulation", "adaptation"],
+	},
+	{
+		id: "d083",
+		title: "Sourdough hydration ratio",
+		text: "Higher hydration doughs can produce larger holes but are harder to shape.",
+		category: "food",
+		tags: ["sourdough", "baking", "hydration"],
+	},
+	{
+		id: "d084",
+		title: "Olympic rowing stroke rate",
+		text: "Rowing crews adjust stroke rate to balance boat speed and endurance.",
+		category: "sports",
+		tags: ["rowing", "strategy", "endurance"],
+	},
+	{
+		id: "d085",
+		title: "Berlin museum island",
+		text: "Museum Island in Berlin clusters major collections of archaeology and art.",
+		category: "travel",
+		tags: ["berlin", "museum", "culture"],
+	},
+	{
+		id: "d086",
+		title: "Postgres query planner",
+		text: "The query planner chooses execution paths based on estimated table statistics.",
+		category: "programming",
+		tags: ["postgres", "query planner", "database"],
+	},
+	{
+		id: "d087",
+		title: "Byzantine trade routes",
+		text: "Byzantine ports connected Mediterranean trade between Europe and Asia.",
+		category: "history",
+		tags: ["byzantine", "trade", "mediterranean"],
+	},
+	{
+		id: "d088",
+		title: "Strength deload week",
+		text: "A deload week lowers training volume to recover before heavier cycles.",
+		category: "health",
+		tags: ["strength", "recovery", "training"],
+	},
+	{
+		id: "d089",
+		title: "Websocket heartbeat",
+		text: "Heartbeat pings detect stale websocket connections before users notice failures.",
+		category: "technology",
+		tags: ["websocket", "heartbeat", "realtime"],
+	},
+	{
+		id: "d090",
+		title: "Arctic fox seasonal coat",
+		text: "Arctic fox fur changes color seasonally to improve camouflage.",
+		category: "animals",
+		tags: ["arctic fox", "camouflage", "seasonal"],
+	},
+	{
+		id: "d091",
+		title: "Ramen tare balance",
+		text: "Tare seasoning sets the salt and umami profile of ramen broth.",
+		category: "food",
+		tags: ["ramen", "broth", "umami"],
+	},
+	{
+		id: "d092",
+		title: "Basketball weak-side help",
+		text: "Weak-side defenders rotate early to protect the rim on dribble penetration.",
+		category: "sports",
+		tags: ["basketball", "defense", "rotation"],
+	},
+	{
+		id: "d093",
+		title: "Passport renewal timing",
+		text: "Many countries require six months of passport validity beyond travel dates.",
+		category: "travel",
+		tags: ["passport", "visa", "planning"],
+	},
+	{
+		id: "d094",
+		title: "TypeScript discriminated unions",
+		text: "Discriminated unions model variant states with exhaustive type checking.",
+		category: "programming",
+		tags: ["typescript", "types", "safety"],
+	},
+	{
+		id: "d095",
+		title: "Medieval guild apprenticeships",
+		text: "Craft guild apprenticeships trained workers through staged hands-on practice.",
+		category: "history",
+		tags: ["guild", "apprentice", "craft"],
+	},
+	{
+		id: "d096",
+		title: "Zone two cardio",
+		text: "Zone two training builds aerobic capacity while keeping fatigue manageable.",
+		category: "health",
+		tags: ["cardio", "aerobic", "endurance"],
+	},
+	{
+		id: "d097",
+		title: "Edge CDN caching",
+		text: "Caching static responses at edge locations reduces latency for global users.",
+		category: "technology",
+		tags: ["cdn", "edge", "latency"],
+	},
+	{
+		id: "d098",
+		title: "Orangutan nest building",
+		text: "Orangutans build tree nests daily using bent branches and leaves.",
+		category: "animals",
+		tags: ["orangutan", "nest", "behavior"],
+	},
+	{
+		id: "d099",
+		title: "Regional curry variations",
+		text: "Regional curry recipes differ in spice blends, fat sources, and souring agents.",
+		category: "food",
+		tags: ["curry", "regional", "spices"],
+	},
+	{
+		id: "d100",
+		title: "Table tennis serve deception",
+		text: "Small grip and wrist adjustments can disguise spin direction on serves.",
+		category: "sports",
+		tags: ["table tennis", "serve", "spin"],
 	},
 ];
