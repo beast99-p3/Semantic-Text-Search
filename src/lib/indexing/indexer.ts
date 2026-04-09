@@ -1,6 +1,8 @@
 import { getServerEnv } from "@/lib/config/env";
 import { DATASET_DOCUMENTS, DATASET_VERSION } from "@/lib/dataset/documents";
 import { chunkDocument } from "@/lib/indexing/chunking";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import {
   getEmbeddingCachePath,
   readEmbeddingCache,
@@ -14,18 +16,28 @@ let indexingPromise: Promise<EmbeddingCache> | null = null;
 let lastError: string | null = null;
 let inMemoryCache: EmbeddingCache | null = null;
 const EMBEDDING_CONCURRENCY = 4;
+const DATASET_FILE_PATH = path.resolve(
+  /* turbopackIgnore: true */ process.cwd(),
+  "src/lib/dataset/documents.ts"
+);
 
-function computeDatasetHash(): string {
-  // The hash only tracks document content and metadata, not embeddings.
-  const payload = DATASET_DOCUMENTS.map((doc) => ({
-    id: doc.id,
-    title: doc.title,
-    text: doc.text,
-    category: doc.category,
-    tags: doc.tags,
-  }));
+async function computeDatasetHash(): Promise<string> {
+  // Hash the dataset source file so re-indexing is skipped when file content is unchanged.
+  try {
+    const datasetSource = await readFile(DATASET_FILE_PATH, "utf-8");
+    return sha256(datasetSource);
+  } catch {
+    // Fallback keeps behavior safe if the source file cannot be read for any reason.
+    const payload = DATASET_DOCUMENTS.map((doc) => ({
+      id: doc.id,
+      title: doc.title,
+      text: doc.text,
+      category: doc.category,
+      tags: doc.tags,
+    }));
 
-  return sha256(JSON.stringify(payload));
+    return sha256(JSON.stringify(payload));
+  }
 }
 
 async function buildFreshCache(datasetHash: string): Promise<EmbeddingCache> {
@@ -97,7 +109,7 @@ export async function ensureIndexReady(force = false): Promise<EmbeddingCache> {
 
   // Reindex only when the dataset changes or the UI explicitly requests it.
   indexingPromise = (async () => {
-    const datasetHash = computeDatasetHash();
+    const datasetHash = await computeDatasetHash();
 
     if (!force) {
       const cached = inMemoryCache ?? (await readEmbeddingCache());
@@ -127,7 +139,7 @@ export async function ensureIndexReady(force = false): Promise<EmbeddingCache> {
 }
 
 export async function getIndexStatus(): Promise<IndexStatus> {
-  const datasetHash = computeDatasetHash();
+  const datasetHash = await computeDatasetHash();
   const env = getServerEnv();
   const cache = inMemoryCache ?? (await readEmbeddingCache());
 
