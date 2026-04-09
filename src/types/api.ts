@@ -17,4 +17,5 @@ export interface SearchApiResponse {
   tookMs: number;
   indexing: IndexStatus;
   results: SearchResultDto[];
+  warnings?: string[];
 }

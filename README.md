@@ -1,8 +1,8 @@
 # Semantic Text Search
 
-Semantic search app built with Next.js and Gemini embeddings.
+Next.js semantic search app using Gemini embeddings.
 
-The app embeds documents and queries, then ranks results in application code using cosine similarity and a relevance threshold.
+Documents and queries are embedded, then ranked in app code with cosine similarity and threshold filtering.
 
 ## What’s In Here
 
@@ -90,3 +90,5 @@ docker run --rm -p 3000:3000 --env-file .env.local semantic-text-search
 
 - The app does not ask Gemini to rank or choose documents directly.
 - The cache is local and human-readable.
+- Default threshold is `0.62` (configurable with `SEMANTIC_RELEVANCE_THRESHOLD`).
+- Cache invalidation is dataset-hash based and can also be forced via `POST /api/index`.

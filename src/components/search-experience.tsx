@@ -6,6 +6,7 @@ import type { IndexStatus } from "@/lib/indexing/types";
 import type { SearchApiResponse } from "@/types/api";
 
 const DEBOUNCE_MS = 350;
+const MAX_QUERY_LENGTH = 300;
 const HISTORY_KEY = "semantic-search-history";
 const QUICK_QUERIES = [
   "enterprise backend APIs",
@@ -59,6 +60,66 @@ function saveSearchHistory(items: string[]): void {
   window.localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
 }
 
+interface QueryFeedback {
+  normalizedQuery: string;
+  warnings: string[];
+  error?: string;
+}
+
+function validateClientQuery(rawQuery: string): QueryFeedback {
+  const normalizedQuery = rawQuery.trim().replace(/\s+/g, " ");
+  const warnings: string[] = [];
+
+  if (!rawQuery) {
+    return { normalizedQuery, warnings };
+  }
+
+  if (!normalizedQuery) {
+    return {
+      normalizedQuery,
+      warnings,
+      error: "Query cannot be only spaces.",
+    };
+  }
+
+  if (normalizedQuery.length > MAX_QUERY_LENGTH) {
+    return {
+      normalizedQuery,
+      warnings,
+      error: `Query is too long. Keep it under ${MAX_QUERY_LENGTH} characters.`,
+    };
+  }
+
+  if (/^[\p{P}\p{S}\s]+$/u.test(normalizedQuery)) {
+    return {
+      normalizedQuery,
+      warnings,
+      error: "Use at least some letters or numbers in your query.",
+    };
+  }
+
+  const letters = [...normalizedQuery.matchAll(/\p{L}/gu)].length;
+  const latinLetters = [...normalizedQuery.matchAll(/\p{Script=Latin}/gu)].length;
+  const symbols = [...normalizedQuery.matchAll(/[\p{P}\p{S}]/gu)].length;
+
+  if (normalizedQuery.length > 220) {
+    warnings.push("Long queries may reduce precision. Try shortening the sentence.");
+  }
+
+  if (normalizedQuery.length > 0 && symbols / normalizedQuery.length > 0.3) {
+    warnings.push("Query includes many special characters. Results may be less stable.");
+  }
+
+  if (letters > 0 && latinLetters / letters < 0.4) {
+    warnings.push("Non-English query detected. Search is supported, but quality may vary by language.");
+  }
+
+  return {
+    normalizedQuery,
+    warnings,
+  };
+}
+
 export function SearchExperience() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -67,6 +128,7 @@ export function SearchExperience() {
   const [indexStatus, setIndexStatus] = useState<IndexStatus | null>(null);
   const [searchData, setSearchData] = useState<SearchApiResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchWarnings, setSearchWarnings] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isIndexing, setIsIndexing] = useState(false);
 
@@ -133,8 +195,22 @@ export function SearchExperience() {
     const trimmed = debouncedQuery.trim();
 
     if (!trimmed) {
+      if (debouncedQuery.length > 0) {
+        setSearchError("Query cannot be only spaces.");
+        setSearchWarnings([]);
+      }
       setSearchData(null);
-      setSearchError(null);
+      if (debouncedQuery.length === 0) {
+        setSearchError(null);
+      }
+      return;
+    }
+
+    const feedback = validateClientQuery(debouncedQuery);
+    if (feedback.error) {
+      setSearchData(null);
+      setSearchError(feedback.error);
+      setSearchWarnings(feedback.warnings);
       return;
     }
 
@@ -144,9 +220,10 @@ export function SearchExperience() {
       // Debounce keeps the API from firing on every keystroke.
       setIsSearching(true);
       setSearchError(null);
+      setSearchWarnings(feedback.warnings);
 
       try {
-        const params = new URLSearchParams({ q: trimmed, k: "8" });
+        const params = new URLSearchParams({ q: feedback.normalizedQuery, k: "8" });
         if (category !== "all") {
           params.set("category", category);
         }
@@ -164,9 +241,10 @@ export function SearchExperience() {
         const typed = body as SearchApiResponse;
         setSearchData(typed);
         setIndexStatus(typed.indexing);
+        setSearchWarnings(typed.warnings ?? feedback.warnings);
 
         setHistory((prev) => {
-          const next = [trimmed, ...prev.filter((item) => item !== trimmed)].slice(0, 12);
+          const next = [feedback.normalizedQuery, ...prev.filter((item) => item !== feedback.normalizedQuery)].slice(0, 12);
           saveSearchHistory(next);
           return next;
         });
@@ -198,6 +276,7 @@ export function SearchExperience() {
     setQuery("");
     setSearchData(null);
     setSearchError(null);
+    setSearchWarnings([]);
     inputRef.current?.focus();
   }, []);
 
@@ -343,6 +422,14 @@ export function SearchExperience() {
           {searchError && (
             <div className="mt-5 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700">
               {searchError}
+            </div>
+          )}
+
+          {!searchError && searchWarnings.length > 0 && (
+            <div className="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+              {searchWarnings.map((warning) => (
+                <p key={warning}>{warning}</p>
+              ))}
             </div>
           )}
 
