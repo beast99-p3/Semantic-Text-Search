@@ -7,6 +7,12 @@ import type { SearchApiResponse } from "@/types/api";
 
 const DEBOUNCE_MS = 350;
 const HISTORY_KEY = "semantic-search-history";
+const QUICK_QUERIES = [
+  "enterprise backend APIs",
+  "indonesian island with volcanoes",
+  "canines retrieving balls",
+  "python dependency isolation",
+];
 
 function useDebouncedValue(value: string, delayMs: number): string {
   const [debounced, setDebounced] = useState(value);
@@ -188,8 +194,15 @@ export function SearchExperience() {
     });
   }, []);
 
+  const clearSearch = useCallback(() => {
+    setQuery("");
+    setSearchData(null);
+    setSearchError(null);
+    inputRef.current?.focus();
+  }, []);
+
   return (
-    <main className="mx-auto w-full max-w-[1180px] px-4 py-8 sm:px-8 sm:py-12">
+    <main className="mx-auto w-full max-w-295 px-4 py-8 sm:px-8 sm:py-12">
       <section className="animate-rise-in grid gap-6 lg:grid-cols-[320px_1fr]">
         <aside className="frost-panel rounded-2xl p-5">
           <h2 className="text-lg font-semibold tracking-tight">Search History</h2>
@@ -208,7 +221,7 @@ export function SearchExperience() {
               >
                 <button
                   onClick={() => setQuery(item)}
-                  className="min-w-0 flex-1 text-left text-sm hover:text-[var(--accent-1)]"
+                  className="min-w-0 flex-1 text-left text-sm hover:text-(--accent-1)"
                 >
                   <span className="block truncate">{item}</span>
                 </button>
@@ -245,7 +258,7 @@ export function SearchExperience() {
               <button
                 onClick={() => runIndex(true)}
                 disabled={isIndexing}
-                className="rounded-lg bg-[var(--accent-2)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                className="rounded-lg bg-(--accent-2) px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
               >
                 Force re-index
               </button>
@@ -255,7 +268,7 @@ export function SearchExperience() {
 
         <section className="frost-panel rounded-2xl p-5 sm:p-7">
           <header className="space-y-2">
-            <p className="font-mono text-xs uppercase tracking-[0.22em] text-[var(--ink-2)]">
+            <p className="font-mono text-xs uppercase tracking-[0.22em] text-(--ink-2)">
               Semantic text search
             </p>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -274,7 +287,7 @@ export function SearchExperience() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Try 'backend language for enterprise APIs'"
-                className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 pr-18 text-sm outline-none focus:border-[var(--accent-1)]"
+                className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 pr-18 text-sm outline-none focus:border-(--accent-1)"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs">
                 <span className="kbd">/</span>
@@ -284,7 +297,7 @@ export function SearchExperience() {
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value as DocumentCategory | "all")}
-              className="rounded-xl border border-zinc-300 bg-white px-3 py-3 text-sm outline-none focus:border-[var(--accent-1)]"
+              className="rounded-xl border border-zinc-300 bg-white px-3 py-3 text-sm outline-none focus:border-(--accent-1)"
             >
               <option value="all">All categories</option>
               {DOCUMENT_CATEGORIES.map((item) => (
@@ -293,6 +306,27 @@ export function SearchExperience() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="ink-muted text-xs">Quick examples:</span>
+            {QUICK_QUERIES.map((sample) => (
+              <button
+                key={sample}
+                onClick={() => setQuery(sample)}
+                className="rounded-full border border-zinc-300 bg-white/80 px-3 py-1 text-xs hover:border-(--accent-1) hover:text-(--accent-1)"
+              >
+                {sample}
+              </button>
+            ))}
+            {query.trim() && (
+              <button
+                onClick={clearSearch}
+                className="rounded-full border border-zinc-300 bg-zinc-100/80 px-3 py-1 text-xs font-semibold text-zinc-700 hover:border-zinc-500"
+              >
+                Clear
+              </button>
+            )}
           </div>
 
           {isSearching && (
@@ -349,7 +383,7 @@ export function SearchExperience() {
                   <p className="ink-muted mt-2 text-sm">{result.text}</p>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-200">
                     <div
-                      className="h-full rounded-full bg-[var(--accent-1)] transition-all"
+                      className="h-full rounded-full bg-(--accent-1) transition-all"
                       style={{ width: scoreBarWidth(result.score) }}
                     />
                   </div>
