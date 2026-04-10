@@ -70,8 +70,6 @@ function validateQuery(rawQuery: string): QueryValidationResult {
 }
 
 export async function GET(request: NextRequest) {
-  const startedAt = Date.now();
-
   try {
     const params = Object.fromEntries(request.nextUrl.searchParams.entries());
     const parsed = querySchema.safeParse(params);
@@ -116,7 +114,8 @@ export async function GET(request: NextRequest) {
     const status = await getIndexStatus();
     const response: SearchApiResponse = {
       query: queryValidation.normalizedQuery,
-      tookMs: Date.now() - startedAt,
+      tookMs: payload.timing.embeddingMs + payload.timing.similarityMs,
+      timing: payload.timing,
       indexing: status,
       results: payload.results,
       warnings: queryValidation.warnings,

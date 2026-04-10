@@ -488,7 +488,10 @@ export function SearchExperience() {
             <section className="mt-7 rounded-xl border border-zinc-300 bg-white/70 p-4 text-xs ink-muted">
               <p>
                 Found {searchData.results.length} semantic result
-                {searchData.results.length === 1 ? "" : "s"} in {searchData.tookMs}ms.
+                {searchData.results.length === 1 ? "" : "s"}.
+              </p>
+              <p className="mt-1">
+                Embedding: {searchData.timing.embeddingMs}ms | Similarity: {searchData.timing.similarityMs}ms | Total: {searchData.tookMs}ms
               </p>
               <p className="mt-1">
                 Index ready: {searchData.indexing.ready ? "yes" : "no"} | Model: {searchData.indexing.model}

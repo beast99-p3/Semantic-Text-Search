@@ -15,6 +15,10 @@ export interface SearchResultDto {
 export interface SearchApiResponse {
   query: string;
   tookMs: number;
+  timing: {
+    embeddingMs: number;
+    similarityMs: number;
+  };
   indexing: IndexStatus;
   results: SearchResultDto[];
   warnings?: string[];

@@ -6,6 +6,10 @@ import type { SearchInput } from "@/lib/search/types";
 
 export interface SearchResponseModel {
   results: Awaited<ReturnType<typeof rankSemanticMatches>>;
+  timing: {
+    embeddingMs: number;
+    similarityMs: number;
+  };
 }
 
 interface SearchCacheEntry {
@@ -73,22 +77,36 @@ export async function semanticSearch(input: SearchInput): Promise<SearchResponse
   const cached = searchResponseCache.get(cacheKey);
 
   if (cached && cached.expiresAt > now) {
-    return { results: cached.results };
+    return {
+      results: cached.results,
+      timing: {
+        embeddingMs: 0,
+        similarityMs: 0,
+      },
+    };
   }
 
+  const embeddingStartedAt = Date.now();
   const queryEmbedding = await embedText(trimmedQuery, { purpose: "query" });
+  const embeddingMs = Date.now() - embeddingStartedAt;
   const candidateRecords = filterByCategory(index.records, input.category);
 
+  const similarityStartedAt = Date.now();
   const results = rankSemanticMatches(
     queryEmbedding,
     candidateRecords,
     input.k,
     input.threshold
   );
+  const similarityMs = Date.now() - similarityStartedAt;
 
   cacheSearchResults(cacheKey, results, now);
 
   return {
     results,
+    timing: {
+      embeddingMs,
+      similarityMs,
+    },
   };
 }
