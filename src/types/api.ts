@@ -19,6 +19,7 @@ export interface SearchApiResponse {
     embeddingMs: number;
     similarityMs: number;
   };
+  cacheHit: boolean;
   indexing: IndexStatus;
   results: SearchResultDto[];
   warnings?: string[];

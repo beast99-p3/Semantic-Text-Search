@@ -486,13 +486,25 @@ export function SearchExperience() {
           {searchData && (
             // Show result count, latency, and active index model for quick feedback.
             <section className="mt-7 rounded-xl border border-zinc-300 bg-white/70 p-4 text-xs ink-muted">
-              <p>
+              <p className="flex items-center gap-2">
                 Found {searchData.results.length} semantic result
                 {searchData.results.length === 1 ? "" : "s"}.
+                <span
+                  className={`rounded-full border px-2 py-0.5 font-semibold ${
+                    searchData.cacheHit
+                      ? "border-sky-300 bg-sky-100 text-sky-800"
+                      : "border-emerald-300 bg-emerald-100 text-emerald-800"
+                  }`}
+                >
+                  {searchData.cacheHit ? "Cached" : "Computed"}
+                </span>
               </p>
               <p className="mt-1">
                 Embedding: {searchData.timing.embeddingMs}ms | Similarity: {searchData.timing.similarityMs}ms | Total: {searchData.tookMs}ms
               </p>
+              {searchData.cacheHit && (
+                <p className="mt-1">Phase timings are 0ms because this response was served from cache.</p>
+              )}
               <p className="mt-1">
                 Index ready: {searchData.indexing.ready ? "yes" : "no"} | Model: {searchData.indexing.model}
               </p>

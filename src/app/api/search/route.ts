@@ -116,6 +116,7 @@ export async function GET(request: NextRequest) {
       query: queryValidation.normalizedQuery,
       tookMs: payload.timing.embeddingMs + payload.timing.similarityMs,
       timing: payload.timing,
+      cacheHit: payload.cacheHit,
       indexing: status,
       results: payload.results,
       warnings: queryValidation.warnings,

@@ -10,6 +10,7 @@ export interface SearchResponseModel {
     embeddingMs: number;
     similarityMs: number;
   };
+  cacheHit: boolean;
 }
 
 interface SearchCacheEntry {
@@ -83,6 +84,7 @@ export async function semanticSearch(input: SearchInput): Promise<SearchResponse
         embeddingMs: 0,
         similarityMs: 0,
       },
+      cacheHit: true,
     };
   }
 
@@ -108,5 +110,6 @@ export async function semanticSearch(input: SearchInput): Promise<SearchResponse
       embeddingMs,
       similarityMs,
     },
+    cacheHit: false,
   };
 }
