@@ -6,7 +6,7 @@ Documents and queries are embedded, then ranked in app code with cosine similari
 
 ## What’s In Here
 
-- A curated dataset of 100 short documents across animals, programming, sports, food, travel, history, technology, and health.
+- A curated dataset of 104 short documents across animals, programming, sports, food, travel, history, technology, and health.
 - Cached indexing so embeddings are not recomputed every time the app starts.
 - Cosine similarity scoring and relevance threshold filtering.
 - A lightweight UI with debounced search, search history, category filtering, and an index status panel.
@@ -26,6 +26,11 @@ Try these in the search box:
 - `late caffeine and sleep`
 
 These queries are useful for checking semantic matches and ambiguity handling.
+
+Intentional ambiguity test cases in the dataset:
+
+- `Java island tourism` vs `Java programming language`
+- `Apple fruit nutrition` vs `Apple stock price`
 
 ## How It Works
 

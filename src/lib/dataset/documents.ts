@@ -1,6 +1,6 @@
 import type { DatasetDocument } from "@/lib/dataset/types";
 
-export const DATASET_VERSION = "2026-04-09-v2";
+export const DATASET_VERSION = "2026-04-10-v3";
 
 export const DATASET_DOCUMENTS: DatasetDocument[] = [
 	{
@@ -702,5 +702,33 @@ export const DATASET_DOCUMENTS: DatasetDocument[] = [
 		text: "Small grip and wrist adjustments can disguise spin direction on serves.",
 		category: "sports",
 		tags: ["table tennis", "serve", "spin"],
+	},
+	{
+		id: "d101",
+		title: "Java island tourism circuits",
+		text: "Tourism in Java includes Yogyakarta temples, volcano sunrise hikes, and coastal train routes.",
+		category: "travel",
+		tags: ["java", "island", "tourism"],
+	},
+	{
+		id: "d102",
+		title: "Java language memory tuning",
+		text: "Java backend services often tune JVM heap and garbage collection for latency-sensitive workloads.",
+		category: "programming",
+		tags: ["java", "jvm", "backend"],
+	},
+	{
+		id: "d103",
+		title: "Apple fruit nutrition profile",
+		text: "Apples provide fiber, vitamin C, and polyphenols that support satiety and cardiometabolic health.",
+		category: "health",
+		tags: ["apple", "fruit", "nutrition"],
+	},
+	{
+		id: "d104",
+		title: "Apple stock valuation signals",
+		text: "Apple stock analysis tracks earnings growth, gross margin trends, and forward price-to-earnings multiples.",
+		category: "technology",
+		tags: ["apple", "stock", "valuation"],
 	},
 ];
