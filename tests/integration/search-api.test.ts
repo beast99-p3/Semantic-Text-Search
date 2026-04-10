@@ -56,6 +56,7 @@ describe("GET /api/search", () => {
         similarityMs: 2,
       },
       cacheHit: false,
+      topRejectedScore: 0.4412,
     });
 
     const request = new NextRequest("http://localhost:3000/api/search?q=%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%A4%E0%A5%87%20%E0%A4%A6%E0%A5%81%E0%A4%A8%E0%A4%BF%E0%A4%AF%E0%A4%BE");
@@ -86,6 +87,7 @@ describe("GET /api/search", () => {
         similarityMs: 4,
       },
       cacheHit: false,
+      topRejectedScore: null,
     });
 
     const request = new NextRequest("http://localhost:3000/api/search?q=enterprise%20api");
@@ -99,6 +101,7 @@ describe("GET /api/search", () => {
     expect(body.timing.similarityMs).toBe(4);
     expect(body.tookMs).toBe(15);
     expect(body.cacheHit).toBe(false);
+    expect(body.topRejectedScore).toBeNull();
     expect(body.warnings).toEqual([]);
   });
 });

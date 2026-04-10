@@ -2,6 +2,11 @@ import type { CachedEmbeddingRecord } from "@/lib/indexing/types";
 import { cosineSimilarity } from "@/lib/search/cosine";
 import type { SemanticSearchHit } from "@/lib/search/types";
 
+export interface RankingDiagnostics {
+  hits: SemanticSearchHit[];
+  topRejectedScore: number | null;
+}
+
 interface ScoreAccumulator {
   id: string;
   title: string;
@@ -29,7 +34,7 @@ export function rankSemanticMatches(
   records: CachedEmbeddingRecord[],
   topK: number,
   threshold: number
-): SemanticSearchHit[] {
+): RankingDiagnostics {
   // Collapse chunk-level scores back to the document level so users see one result per document.
   const byDocument = new Map<string, ScoreAccumulator>();
 
@@ -50,11 +55,13 @@ export function rankSemanticMatches(
     }
   }
 
-  return [...byDocument.values()]
+  const sortedByScore = [...byDocument.values()].sort((a, b) => b.bestScore - a.bestScore);
+  const passing = sortedByScore
     .filter((item) => item.bestScore >= threshold)
     .sort((a, b) => b.bestScore - a.bestScore)
-    .slice(0, topK)
-    .map((item) => {
+    .slice(0, topK);
+
+  const hits = passing.map((item) => {
       const score = Number(item.bestScore.toFixed(4));
 
       return {
@@ -69,4 +76,12 @@ export function rankSemanticMatches(
         explanation: `Top semantic chunk: "${item.bestChunk}"`,
       };
     });
+
+  return {
+    hits,
+    topRejectedScore:
+      hits.length === 0 && sortedByScore.length > 0
+        ? Number(sortedByScore[0].bestScore.toFixed(4))
+        : null,
+  };
 }

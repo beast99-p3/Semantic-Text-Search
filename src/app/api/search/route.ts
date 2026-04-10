@@ -117,6 +117,7 @@ export async function GET(request: NextRequest) {
       tookMs: payload.timing.embeddingMs + payload.timing.similarityMs,
       timing: payload.timing,
       cacheHit: payload.cacheHit,
+      topRejectedScore: payload.topRejectedScore,
       indexing: status,
       results: payload.results,
       warnings: queryValidation.warnings,

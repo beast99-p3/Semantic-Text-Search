@@ -27,14 +27,16 @@ const fixtures: CachedEmbeddingRecord[] = [
 
 describe("rankSemanticMatches", () => {
   it("keeps scores above threshold", () => {
-    const hits = rankSemanticMatches([1, 0, 0], fixtures, 5, 0.5);
-    expect(hits).toHaveLength(1);
-    expect(hits[0].id).toBe("a");
-    expect(hits[0].confidence).toMatch(/high|medium|low/);
+    const ranking = rankSemanticMatches([1, 0, 0], fixtures, 5, 0.5);
+    expect(ranking.hits).toHaveLength(1);
+    expect(ranking.hits[0].id).toBe("a");
+    expect(ranking.hits[0].confidence).toMatch(/high|medium|low/);
+    expect(ranking.topRejectedScore).toBeNull();
   });
 
   it("returns empty list when nothing passes threshold", () => {
-    const hits = rankSemanticMatches([0, 0, 1], fixtures, 5, 0.3);
-    expect(hits).toHaveLength(0);
+    const ranking = rankSemanticMatches([0, 0, 1], fixtures, 5, 0.3);
+    expect(ranking.hits).toHaveLength(0);
+    expect(ranking.topRejectedScore).toBe(0);
   });
 });

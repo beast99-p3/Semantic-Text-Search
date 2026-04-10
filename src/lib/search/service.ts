@@ -5,17 +5,19 @@ import { rankSemanticMatches } from "@/lib/search/ranker";
 import type { SearchInput } from "@/lib/search/types";
 
 export interface SearchResponseModel {
-  results: Awaited<ReturnType<typeof rankSemanticMatches>>;
+  results: Awaited<ReturnType<typeof rankSemanticMatches>>["hits"];
   timing: {
     embeddingMs: number;
     similarityMs: number;
   };
   cacheHit: boolean;
+  topRejectedScore: number | null;
 }
 
 interface SearchCacheEntry {
   expiresAt: number;
   results: SearchResponseModel["results"];
+  topRejectedScore: SearchResponseModel["topRejectedScore"];
 }
 
 const SEARCH_CACHE_TTL_MS = 30_000;
@@ -51,10 +53,16 @@ function pruneExpiredSearchEntries(now: number): void {
   }
 }
 
-function cacheSearchResults(key: string, results: SearchResponseModel["results"], now: number): void {
+function cacheSearchResults(
+  key: string,
+  results: SearchResponseModel["results"],
+  topRejectedScore: SearchResponseModel["topRejectedScore"],
+  now: number
+): void {
   searchResponseCache.set(key, {
     expiresAt: now + SEARCH_CACHE_TTL_MS,
     results,
+    topRejectedScore,
   });
 
   while (searchResponseCache.size > SEARCH_CACHE_MAX_ENTRIES) {
@@ -85,6 +93,7 @@ export async function semanticSearch(input: SearchInput): Promise<SearchResponse
         similarityMs: 0,
       },
       cacheHit: true,
+      topRejectedScore: cached.topRejectedScore,
     };
   }
 
@@ -94,15 +103,16 @@ export async function semanticSearch(input: SearchInput): Promise<SearchResponse
   const candidateRecords = filterByCategory(index.records, input.category);
 
   const similarityStartedAt = Date.now();
-  const results = rankSemanticMatches(
+  const ranking = rankSemanticMatches(
     queryEmbedding,
     candidateRecords,
     input.k,
     input.threshold
   );
+  const results = ranking.hits;
   const similarityMs = Date.now() - similarityStartedAt;
 
-  cacheSearchResults(cacheKey, results, now);
+  cacheSearchResults(cacheKey, results, ranking.topRejectedScore, now);
 
   return {
     results,
@@ -111,5 +121,6 @@ export async function semanticSearch(input: SearchInput): Promise<SearchResponse
       similarityMs,
     },
     cacheHit: false,
+    topRejectedScore: ranking.topRejectedScore,
   };
 }

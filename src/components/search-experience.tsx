@@ -443,6 +443,11 @@ export function SearchExperience() {
             <div className="mt-6 rounded-xl border border-zinc-300 bg-white/70 p-5 text-sm ink-muted">
               No semantic matches crossed the relevance threshold. Try a clearer query or a lower
               threshold in the API call.
+              {typeof searchData.topRejectedScore === "number" && (
+                <p className="mt-2">
+                  Closest rejected match scored {searchData.topRejectedScore.toFixed(4)}.
+                </p>
+              )}
             </div>
           )}
 

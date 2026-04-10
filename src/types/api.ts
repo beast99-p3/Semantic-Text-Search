@@ -20,6 +20,7 @@ export interface SearchApiResponse {
     similarityMs: number;
   };
   cacheHit: boolean;
+  topRejectedScore: number | null;
   indexing: IndexStatus;
   results: SearchResultDto[];
   warnings?: string[];
