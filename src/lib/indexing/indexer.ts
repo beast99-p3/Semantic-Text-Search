@@ -21,6 +21,16 @@ const DATASET_FILE_PATH = path.resolve(
   "src/lib/dataset/documents.ts"
 );
 
+function vectorMagnitude(values: number[]): number {
+  let sumSquares = 0;
+
+  for (let i = 0; i < values.length; i += 1) {
+    sumSquares += values[i] * values[i];
+  }
+
+  return Math.sqrt(sumSquares);
+}
+
 async function computeDatasetHash(): Promise<string> {
   // Hash the dataset source file so re-indexing is skipped when file content is unchanged.
   try {
@@ -71,6 +81,7 @@ async function buildFreshCache(datasetHash: string): Promise<EmbeddingCache> {
         category: chunk.category,
         tags: chunk.tags,
         embedding,
+        embeddingMagnitude: vectorMagnitude(embedding),
       };
 
       if ((index + 1) % 10 === 0) {
@@ -87,7 +98,7 @@ async function buildFreshCache(datasetHash: string): Promise<EmbeddingCache> {
 
   // Each chunk is embedded once and then persisted locally for reuse.
   const cache: EmbeddingCache = {
-    version: 1,
+    version: 2,
     datasetVersion: DATASET_VERSION,
     datasetHash,
     indexedAt: new Date().toISOString(),

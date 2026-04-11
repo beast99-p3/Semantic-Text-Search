@@ -9,6 +9,7 @@ export interface CachedEmbeddingRecord {
   category: DocumentCategory;
   tags: string[];
   embedding: number[];
+  embeddingMagnitude?: number;
 }
 
 export interface EmbeddingCache {
