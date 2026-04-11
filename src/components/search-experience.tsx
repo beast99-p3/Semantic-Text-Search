@@ -8,6 +8,7 @@ import type { SearchApiResponse } from "@/types/api";
 const DEBOUNCE_MS = 350;
 const MAX_QUERY_LENGTH = 300;
 const HISTORY_KEY = "semantic-search-history";
+const DEFAULT_THRESHOLD = 0.62;
 const QUICK_QUERIES = [
   "enterprise backend APIs",
   "indonesian island with volcanoes",
@@ -15,7 +16,7 @@ const QUICK_QUERIES = [
   "python dependency isolation",
 ];
 
-function useDebouncedValue(value: string, delayMs: number): string {
+function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
 
   useEffect(() => {
@@ -40,6 +41,18 @@ function confidenceTone(confidence: "high" | "medium" | "low"): string {
   }
 
   return "bg-zinc-100 text-zinc-700 border-zinc-300";
+}
+
+function thresholdTone(threshold: number): string {
+  if (threshold <= 0.4) {
+    return "Loose filtering";
+  }
+
+  if (threshold >= 0.75) {
+    return "Strict filtering";
+  }
+
+  return "Balanced filtering";
 }
 
 function loadSearchHistory(): string[] {
@@ -131,8 +144,10 @@ export function SearchExperience() {
   const [searchWarnings, setSearchWarnings] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isIndexing, setIsIndexing] = useState(false);
+  const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
 
   const debouncedQuery = useDebouncedValue(query, DEBOUNCE_MS);
+  const debouncedThreshold = useDebouncedValue(threshold, 120);
 
   const refreshIndexStatus = useCallback(async () => {
     // Keep the side panel honest even if indexing happens in another tab or session.
@@ -223,7 +238,11 @@ export function SearchExperience() {
       setSearchWarnings(feedback.warnings);
 
       try {
-        const params = new URLSearchParams({ q: feedback.normalizedQuery, k: "8" });
+        const params = new URLSearchParams({
+          q: feedback.normalizedQuery,
+          k: "8",
+          threshold: debouncedThreshold.toFixed(2),
+        });
         if (category !== "all") {
           params.set("category", category);
         }
@@ -262,7 +281,7 @@ export function SearchExperience() {
     search();
 
     return () => controller.abort();
-  }, [debouncedQuery, category]);
+  }, [debouncedQuery, category, debouncedThreshold]);
 
   const removeHistoryItem = useCallback((itemToRemove: string) => {
     setHistory((prev) => {
@@ -387,6 +406,35 @@ export function SearchExperience() {
             </select>
           </div>
 
+          <div className="mt-4 rounded-xl border border-zinc-300 bg-white/75 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label htmlFor="threshold-slider" className="text-sm font-semibold">
+                Relevance threshold
+              </label>
+              <span className="rounded-full border border-zinc-300 bg-zinc-100 px-2 py-0.5 text-xs font-semibold">
+                {threshold.toFixed(2)}
+              </span>
+            </div>
+
+            <input
+              id="threshold-slider"
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={threshold}
+              onChange={(event) => setThreshold(Number(event.target.value))}
+              className="mt-3 w-full accent-(--accent-1)"
+              aria-label="Adjust relevance threshold"
+            />
+
+            <div className="mt-2 flex items-center justify-between text-xs ink-muted">
+              <span>Looser (more results)</span>
+              <span>{thresholdTone(threshold)}</span>
+              <span>Tighter (fewer results)</span>
+            </div>
+          </div>
+
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="ink-muted text-xs">Quick examples:</span>
             {QUICK_QUERIES.map((sample) => (
@@ -442,7 +490,7 @@ export function SearchExperience() {
           {!isSearching && !searchError && searchData && searchData.results.length === 0 && (
             <div className="mt-6 rounded-xl border border-zinc-300 bg-white/70 p-5 text-sm ink-muted">
               No semantic matches crossed the relevance threshold. Try a clearer query or a lower
-              threshold in the API call.
+              threshold using the slider above.
               {typeof searchData.topRejectedScore === "number" && (
                 <p className="mt-2">
                   Closest rejected match scored {searchData.topRejectedScore.toFixed(4)}.
@@ -507,6 +555,7 @@ export function SearchExperience() {
               <p className="mt-1">
                 Embedding: {searchData.timing.embeddingMs}ms | Similarity: {searchData.timing.similarityMs}ms | Total: {searchData.tookMs}ms
               </p>
+              <p className="mt-1">Active threshold: {debouncedThreshold.toFixed(2)}.</p>
               {searchData.cacheHit && (
                 <p className="mt-1">Phase timings are 0ms because this response was served from cache.</p>
               )}
