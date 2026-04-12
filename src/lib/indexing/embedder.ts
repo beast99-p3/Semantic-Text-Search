@@ -97,12 +97,13 @@ async function requestEmbedding(params: {
   for (let attempt = 0; attempt < MAX_RETRY_ATTEMPTS; attempt += 1) {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/${params.apiVersion}/${modelPath}:embedContent?key=${params.apiKey}`,
+        `https://generativelanguage.googleapis.com/${params.apiVersion}/${modelPath}:embedContent`,
         {
           signal: params.signal,
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-goog-api-key": params.apiKey,
           },
           body: JSON.stringify({
             model: modelPath,

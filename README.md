@@ -94,5 +94,6 @@ docker run --rm -p 3000:3000 --env-file .env.local semantic-text-search
 
 - Gemini is used for embeddings only; ranking happens in the app.
 - The cache is local JSON.
+- The built-in rate limiter is in-memory and process-local; use a shared backing store in multi-instance deployments.
 - Default threshold is `0.62` (configurable with `SEMANTIC_RELEVANCE_THRESHOLD`).
 - Cache invalidation is dataset-hash based and can also be forced via `POST /api/index`.
