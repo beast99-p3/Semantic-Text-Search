@@ -411,9 +411,19 @@ export function SearchExperience() {
               <label htmlFor="threshold-slider" className="text-sm font-semibold">
                 Relevance threshold
               </label>
-              <span className="rounded-full border border-zinc-300 bg-zinc-100 px-2 py-0.5 text-xs font-semibold">
-                {threshold.toFixed(2)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full border border-zinc-300 bg-zinc-100 px-2 py-0.5 text-xs font-semibold">
+                  {threshold.toFixed(2)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setThreshold(DEFAULT_THRESHOLD)}
+                  disabled={threshold === DEFAULT_THRESHOLD}
+                  className="rounded-md border border-zinc-300 bg-white px-2 py-0.5 text-xs font-semibold hover:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-55"
+                >
+                  Reset
+                </button>
+              </div>
             </div>
 
             <input
