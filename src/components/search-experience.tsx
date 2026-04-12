@@ -55,6 +55,18 @@ function thresholdTone(threshold: number): string {
   return "Balanced filtering";
 }
 
+function isTypingContext(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  if (target.isContentEditable) {
+    return true;
+  }
+
+  return Boolean(target.closest("input, textarea, select, button, [contenteditable='true']"));
+}
+
 function loadSearchHistory(): string[] {
   try {
     const raw = window.localStorage.getItem(HISTORY_KEY);
@@ -135,6 +147,7 @@ function validateClientQuery(rawQuery: string): QueryFeedback {
 
 export function SearchExperience() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const resultRefs = useRef<Array<HTMLElement | null>>([]);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<DocumentCategory | "all">("all");
   const [history, setHistory] = useState<string[]>([]);
@@ -145,6 +158,8 @@ export function SearchExperience() {
   const [isSearching, setIsSearching] = useState(false);
   const [isIndexing, setIsIndexing] = useState(false);
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
+  const [activeResultIndex, setActiveResultIndex] = useState(0);
+  const [expandedResultId, setExpandedResultId] = useState<string | null>(null);
 
   const debouncedQuery = useDebouncedValue(query, DEBOUNCE_MS);
   const debouncedThreshold = useDebouncedValue(threshold, 120);
@@ -193,18 +208,6 @@ export function SearchExperience() {
       setSearchError(error instanceof Error ? error.message : "Failed to load index status");
     });
   }, [refreshIndexStatus]);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "/" && document.activeElement !== inputRef.current) {
-        event.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
 
   useEffect(() => {
     const trimmed = debouncedQuery.trim();
@@ -298,6 +301,73 @@ export function SearchExperience() {
     setSearchWarnings([]);
     inputRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    const results = searchData?.results ?? [];
+
+    if (results.length === 0) {
+      setActiveResultIndex(0);
+      setExpandedResultId(null);
+      return;
+    }
+
+    setActiveResultIndex((previous) => Math.min(previous, results.length - 1));
+    setExpandedResultId((previous) =>
+      previous && results.some((item) => item.id === previous) ? previous : null
+    );
+  }, [searchData]);
+
+  useEffect(() => {
+    const activeCard = resultRefs.current[activeResultIndex];
+    activeCard?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [activeResultIndex]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const results = searchData?.results ?? [];
+
+      if (event.key === "/" && document.activeElement !== inputRef.current && !isTypingContext(event.target)) {
+        event.preventDefault();
+        inputRef.current?.focus();
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        clearSearch();
+        return;
+      }
+
+      if (results.length === 0 || isTypingContext(event.target)) {
+        return;
+      }
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setActiveResultIndex((previous) => (previous + 1) % results.length);
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setActiveResultIndex((previous) => (previous - 1 + results.length) % results.length);
+        return;
+      }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const focused = results[activeResultIndex];
+        if (!focused) {
+          return;
+        }
+
+        setExpandedResultId((previous) => (previous === focused.id ? null : focused.id));
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeResultIndex, clearSearch, searchData]);
 
   return (
     <main className="mx-auto w-full max-w-295 px-4 py-8 sm:px-8 sm:py-12">
@@ -464,6 +534,9 @@ export function SearchExperience() {
                 Clear
               </button>
             )}
+            <span className="ink-muted text-xs sm:ml-auto">
+              Keyboard: Up/Down move, Enter expands, Esc clears
+            </span>
           </div>
 
           {isSearching && (
@@ -514,7 +587,14 @@ export function SearchExperience() {
               {searchData.results.map((result, index) => (
                 <article
                   key={result.id}
-                  className="animate-rise-in rounded-2xl border border-zinc-300 bg-white/85 p-4"
+                  ref={(element) => {
+                    resultRefs.current[index] = element;
+                  }}
+                  className={`animate-rise-in rounded-2xl border bg-white/85 p-4 transition-colors ${
+                    index === activeResultIndex
+                      ? "border-(--accent-1) shadow-[0_0_0_2px_rgba(15,23,42,0.08)]"
+                      : "border-zinc-300"
+                  }`}
                   style={{ animationDelay: `${index * 35}ms` }}
                 >
                   <div className="flex flex-wrap items-center gap-2">
@@ -530,7 +610,13 @@ export function SearchExperience() {
                       {result.confidence} confidence
                     </span>
                   </div>
-                  <p className="ink-muted mt-2 text-sm">{result.text}</p>
+                  <p className="ink-muted mt-2 text-sm">
+                    {expandedResultId === result.id
+                      ? result.text
+                      : result.text.length > 220
+                        ? `${result.text.slice(0, 220)}...`
+                        : result.text}
+                  </p>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-200">
                     <div
                       className="h-full rounded-full bg-(--accent-1) transition-all"
@@ -539,8 +625,21 @@ export function SearchExperience() {
                   </div>
                   <div className="mt-1 flex items-center justify-between text-xs">
                     <span className="ink-muted">Semantic score: {result.score.toFixed(4)}</span>
-                    <span className="ink-muted">{result.explanation}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedResultId((previous) =>
+                          previous === result.id ? null : result.id
+                        )
+                      }
+                      className="font-semibold text-(--accent-1) hover:opacity-80"
+                    >
+                      {expandedResultId === result.id ? "Collapse" : "Expand"}
+                    </button>
                   </div>
+                  {expandedResultId === result.id && (
+                    <p className="ink-muted mt-2 text-xs">{result.explanation}</p>
+                  )}
                 </article>
               ))}
             </div>
