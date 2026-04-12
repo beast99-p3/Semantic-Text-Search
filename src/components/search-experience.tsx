@@ -165,7 +165,6 @@ export function SearchExperience() {
   const debouncedThreshold = useDebouncedValue(threshold, 120);
 
   const refreshIndexStatus = useCallback(async () => {
-    // Keep the side panel honest even if indexing happens in another tab or session.
     const response = await fetch("/api/index/status");
     const body = (await response.json()) as { status: IndexStatus };
     setIndexStatus(body.status);
@@ -202,7 +201,6 @@ export function SearchExperience() {
   );
 
   useEffect(() => {
-    // Search history is a local convenience, so we only load it once on mount.
     setHistory(loadSearchHistory());
     refreshIndexStatus().catch((error) => {
       setSearchError(error instanceof Error ? error.message : "Failed to load index status");
@@ -235,7 +233,6 @@ export function SearchExperience() {
     const controller = new AbortController();
 
     const search = async () => {
-      // Debounce keeps the API from firing on every keystroke.
       setIsSearching(true);
       setSearchError(null);
       setSearchWarnings(feedback.warnings);
@@ -646,7 +643,6 @@ export function SearchExperience() {
           )}
 
           {searchData && (
-            // Show result count, latency, and active index model for quick feedback.
             <section className="mt-7 rounded-xl border border-zinc-300 bg-white/70 p-4 text-xs ink-muted">
               <p className="flex items-center gap-2">
                 Found {searchData.results.length} semantic result

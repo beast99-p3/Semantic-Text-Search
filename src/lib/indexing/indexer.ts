@@ -32,12 +32,10 @@ function vectorMagnitude(values: number[]): number {
 }
 
 async function computeDatasetHash(): Promise<string> {
-  // Hash the dataset source file so re-indexing is skipped when file content is unchanged.
   try {
     const datasetSource = await readFile(DATASET_FILE_PATH, "utf-8");
     return sha256(datasetSource);
   } catch {
-    // Fallback keeps behavior safe if the source file cannot be read for any reason.
     const payload = DATASET_DOCUMENTS.map((doc) => ({
       id: doc.id,
       title: doc.title,
@@ -96,7 +94,6 @@ async function buildFreshCache(datasetHash: string): Promise<EmbeddingCache> {
 
   const records = recordsByIndex.filter((record): record is CachedEmbeddingRecord => Boolean(record));
 
-  // Each chunk is embedded once and then persisted locally for reuse.
   const cache: EmbeddingCache = {
     version: 2,
     datasetVersion: DATASET_VERSION,
@@ -118,7 +115,6 @@ export async function ensureIndexReady(force = false): Promise<EmbeddingCache> {
     return indexingPromise;
   }
 
-  // Reindex only when the dataset changes or the UI explicitly requests it.
   indexingPromise = (async () => {
     const datasetHash = await computeDatasetHash();
 

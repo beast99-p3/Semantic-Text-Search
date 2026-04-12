@@ -1,22 +1,21 @@
 # Semantic Text Search
 
-Next.js semantic search app using Gemini embeddings.
+Semantic search app built with Next.js and Gemini embeddings.
 
-Documents and queries are embedded, then ranked in app code with cosine similarity and threshold filtering.
+The app embeds documents and queries, ranks results in application code with cosine similarity, and filters by relevance threshold.
 
-## What’s In Here
+## Included
 
-- A curated dataset of 104 short documents across animals, programming, sports, food, travel, history, technology, and health.
-- Cached indexing so embeddings are not recomputed every time the app starts.
-- Cosine similarity scoring and relevance threshold filtering.
-- A lightweight UI with debounced search, search history, category filtering, and an index status panel.
-- API routes for search and indexing status.
+- 104 short documents across animals, programming, sports, food, travel, history, technology, and health.
+- Local embedding cache so the index is reused between runs.
+- Search UI with live query updates, history, category filtering, and an adjustable threshold.
+- API routes for search and index status.
 - Unit and integration tests.
-- Dockerfile for containerized runs.
+- Dockerfile for container runs.
 
-## Good Demo Queries
+## Sample Queries
 
-Try these in the search box:
+Use these in the search box:
 
 - `enterprise backend APIs`
 - `indonesian island with volcanoes`
@@ -25,9 +24,9 @@ Try these in the search box:
 - `roman water transport engineering`
 - `late caffeine and sleep`
 
-These queries are useful for checking semantic matches and ambiguity handling.
+These are useful for checking semantic matches and ambiguity handling.
 
-Intentional ambiguity test cases in the dataset:
+The dataset also includes ambiguity pairs such as:
 
 - `Java island tourism` vs `Java programming language`
 - `Apple fruit nutrition` vs `Apple stock price`
@@ -36,10 +35,10 @@ Intentional ambiguity test cases in the dataset:
 
 1. The dataset is split into chunks where needed.
 2. Each chunk is embedded once and stored in a local JSON cache.
-3. When a query comes in, the query is embedded with Gemini.
-4. The app compares the query vector to the cached vectors using cosine similarity.
-5. Results below the threshold are dropped.
-6. The top matches are returned with a score and a short explanation.
+3. Queries are embedded with Gemini when they arrive.
+4. The app compares query vectors to cached vectors with cosine similarity.
+5. Results below the threshold are filtered out.
+6. The top matches are returned with a score and short explanation.
 
 ## Project Structure
 
@@ -51,7 +50,7 @@ Intentional ambiguity test cases in the dataset:
 
 ## Setup
 
-### Prerequisites
+### Requirements
 
 - Node.js 20+
 - A Gemini API key
@@ -93,7 +92,7 @@ docker run --rm -p 3000:3000 --env-file .env.local semantic-text-search
 
 ## Notes
 
-- The app does not ask Gemini to rank or choose documents directly.
-- The cache is local and human-readable.
+- Gemini is used for embeddings only; ranking happens in the app.
+- The cache is local JSON.
 - Default threshold is `0.62` (configurable with `SEMANTIC_RELEVANCE_THRESHOLD`).
 - Cache invalidation is dataset-hash based and can also be forced via `POST /api/index`.
